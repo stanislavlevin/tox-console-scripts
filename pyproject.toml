@@ -1,0 +1,38 @@
+[build-system]
+requires = [
+    "setuptools >= 42.0",
+    "setuptools-scm[toml] >= 3.4",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+exclude = '''
+(
+  /(
+      \.git
+    | \.tox
+  )/
+)
+'''
+line-length = 88
+
+[tool.setuptools_scm]
+write_to = "src/tox_console_scripts/version.py"
+
+[tool.pytest.ini_options]
+addopts = "-ra --showlocals"
+
+[tool.coverage.run]
+parallel = true
+
+[tool.coverage.report]
+skip_covered = false
+show_missing = true
+
+[tool.coverage.paths]
+source = [
+    "src/tox-console-scripts",
+    "*/.tox/*/lib/python*/site-packages/tox-console-scripts",
+    "*/src/tox-console-scripts",
+]
