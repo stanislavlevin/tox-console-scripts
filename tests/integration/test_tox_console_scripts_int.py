@@ -159,6 +159,116 @@ def systempackage(initproj):
     yield systempackage_
 
 
+def test_console_scripts_indirect_systemdep(systempackage, initproj, cmd):
+    sitepkg = "mysitepackage"
+    sitepkg_indirect = "myindirectsitepackage"
+    version = "0.1"
+
+    systempackage(
+        sitepkg_indirect,
+        version,
+        filedefs={
+            sitepkg_indirect: {
+                "__init__.py": """\
+                    __version__ = {version}
+
+                    def main():
+                        print("Test!")
+                """.format(
+                    version=version
+                ),
+            },
+            "setup.cfg": """\
+                [metadata]
+                name = {name}
+                description = {name} project
+                version = {version}
+                license = MIT
+                platforms = unix
+
+                [options]
+                packages = find:
+
+                [options.packages.find]
+                where = .
+
+                [options.entry_points]
+                console_scripts =
+                    {name}_script={name}:main
+            """.format(
+                name=sitepkg_indirect, version=version
+            ),
+            "setup.py": """\
+                from setuptools import setup
+                if __name__ == "__main__":
+                    setup()
+            """,
+        },
+    )
+
+    systempackage(
+        sitepkg,
+        version,
+        filedefs={
+            "setup.cfg": """\
+                [metadata]
+                name = {name}
+                description = {name} project
+                version = {version}
+                license = MIT
+                platforms = unix
+
+                [options]
+                packages = find:
+                install_requires =
+                    {sitepkg_indirect}
+
+                [options.packages.find]
+                where = .
+            """.format(
+                name=sitepkg, sitepkg_indirect=sitepkg_indirect, version=version
+            ),
+            "setup.py": """\
+                from setuptools import setup
+                if __name__ == "__main__":
+                    setup()
+            """,
+        },
+    )
+
+    pkg_dir = initproj(
+        "pkg123",
+        filedefs={
+            "tox.ini": """
+                [tox]
+                skipsdist = true
+                [testenv]
+                deps =
+                    {sitepkg}>={version}
+                commands={{envbindir}}/{sitepkg_indirect}_script
+            """.format(
+                sitepkg=sitepkg, sitepkg_indirect=sitepkg_indirect, version=version
+            ),
+        },
+    )
+
+    envbindir = os.path.join(".tox", "python", "bin")
+    sitepkgscript_path = os.path.join(pkg_dir, envbindir, f"{sitepkg_indirect}_script")
+
+    envpython_path = os.path.join(pkg_dir, envbindir, "python")
+    expected_shebang = f"#!{envpython_path}\n"
+
+    result = cmd("--console-scripts", "--sitepackages", "-vv")
+    result.assert_success()
+    assert f"Installing {sitepkg_indirect}_script script to {envbindir}" in result.out
+
+    assert os.path.isfile(sitepkgscript_path)
+    with open(sitepkgscript_path) as f:
+        actual_shebang = f.readline()
+
+    assert actual_shebang == expected_shebang
+
+
 def test_console_scripts(systempackage, initproj, cmd):
     sitepkg = "mysitepackage"
     sitepkg_extra = "myextrasitepackage"
@@ -215,10 +325,10 @@ def test_console_scripts(systempackage, initproj, cmd):
                 skipsdist = True
                 [testenv]
                 deps =
-                    {name}
+                    {name}>={version}
                 commands={{envbindir}}/{name}_script
             """.format(
-                name=sitepkg
+                name=sitepkg, version=version
             ),
         },
     )

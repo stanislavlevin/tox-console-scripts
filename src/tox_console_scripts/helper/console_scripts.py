@@ -2,14 +2,14 @@ import argparse
 import os
 import site
 import sys
-import pkg_resources
 
+from pkg_resources import Requirement, WorkingSet
 from setuptools.command.easy_install import ScriptWriter
 
 
 def write_script(script_name, content, envbindir):
-    target = os.path.join(envbindir, script_name)
     print(f"Installing {script_name} script to {envbindir}")
+    target = os.path.join(envbindir, script_name)
     with open(target, "w") as dst:
         dst.write(content)
         os.fchmod(dst.fileno(), 0o755)
@@ -20,11 +20,12 @@ def main(envbindir, deps):
         # nothing to do
         return
 
-    wset = pkg_resources.WorkingSet()
+    wset = WorkingSet()
+    # at this point all dependencies must be resolved
+    reqs = wset.resolve([Requirement.parse(dep) for dep in deps])
     sitepackagedirs = site.getsitepackages([sys.base_prefix])
-    for dep in deps:
-        dist = wset.by_key[dep]
-        if wset.by_key[dep].location not in sitepackagedirs:
+    for dist in reqs:
+        if dist.location not in sitepackagedirs:
             continue
 
         for args in ScriptWriter.best().get_args(dist):
