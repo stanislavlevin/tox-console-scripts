@@ -1,9 +1,9 @@
-import argparse
 import os
 import site
 import sys
+import sysconfig
 
-from pkg_resources import Requirement, WorkingSet
+from pkg_resources import WorkingSet
 from setuptools.command.easy_install import ScriptWriter
 
 
@@ -15,35 +15,26 @@ def write_script(script_name, content, envbindir):
         os.fchmod(dst.fileno(), 0o755)
 
 
-def main(envbindir, deps):
-    if not deps:
-        # nothing to do
-        return
+def install_console_scripts():
+    """Unconditionally installs console_scripts of all system site packages"""
+    scripts_dir = sysconfig.get_path("scripts")
+    envbindir = os.path.relpath(scripts_dir)
 
     wset = WorkingSet()
-    # at this point all dependencies must be resolved
-    reqs = wset.resolve([Requirement.parse(dep) for dep in deps])
-    sitepackagedirs = site.getsitepackages([sys.base_prefix])
-    for dist in reqs:
-        if dist.location not in sitepackagedirs:
-            continue
+    systemsitepackages_paths = site.getsitepackages([sys.base_prefix])
+    systemsitedists = []
 
+    for systemsitepackages_path in systemsitepackages_paths:
+        systemsitepackages = wset.entry_keys.get(systemsitepackages_path)
+        if systemsitepackages:
+            for systemsitepackage in systemsitepackages:
+                dist = wset.by_key[systemsitepackage]
+                systemsitedists.append(dist)
+
+    for dist in systemsitedists:
         for args in ScriptWriter.best().get_args(dist):
             write_script(*args, envbindir=envbindir)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--bindir",
-        required=True,
-        help="path where to place the generated console scripts",
-    )
-    parser.add_argument(
-        "deps",
-        nargs="*",
-        help="dependencies for which the console scripts should be generated",
-    )
-    options = parser.parse_args()
-
-    main(options.bindir, deps=options.deps)
+    install_console_scripts()
