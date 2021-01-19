@@ -4,8 +4,7 @@ It's possible to use system site packages within Python virtual environment,
 but there is no way to install console or gui scripts into such environment.
 
 With the help of this plugin the corresponding scripts will be automatically
-generated for system site packages calculated as dependencies of current
-environment.
+generated for all of system site packages.
 
 This is mostly used for testing purposes in ALTLinux during RPM build of Python
 packages to run integration tests against the repository packages.

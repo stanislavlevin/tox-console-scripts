@@ -35,30 +35,36 @@ def tox_addoption(parser):
 @hookimpl
 def tox_configure(config):
     for _, envconfig in config.envconfigs.items():
-        if envconfig.console_scripts and not envconfig.sitepackages:
+        if not envconfig.console_scripts:
+            continue
+
+        if not envconfig.sitepackages:
             raise exception.ConfigError(
                 "console_scripts option requires enabled sitepackages"
             )
 
 
-@hookimpl(hookwrapper=True, tryfirst=True)
+@hookimpl(hookwrapper=True, trylast=True)
 def tox_testenv_install_deps(venv, action):
+    """Produce console_scripts for all of the system site packages
+
+    First, tox install project deps pointed in the configuration file(tox.ini) and
+    then install package and its dependencies for testing either via sdist(if
+    skipsdist=False, this is the default) or at develop/editable mode. If
+    skipsdist=True then only the deps from config are honored.
+    """
+
     # execute non-wrapper plugins
+
     yield
     if not venv.envconfig.console_scripts:
         # nothing to do
         return
 
-    envbindir = venv.envconfig.get_envbindir()
     args = [
         venv.envconfig.get_envpython(),
         CONSOLE_SCRIPTS,
-        "--bindir",
-        envbindir,
     ]
-
-    deps = venv.get_resolved_dependencies()
-    args.extend(deps)
 
     venv._pcall(
         args,
