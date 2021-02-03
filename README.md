@@ -1,4 +1,4 @@
-# tox-console-scripts plugin
+# tox-console-scripts plugin ![CI](https://github.com/stanislavlevin/tox-console-scripts/workflows/CI/badge.svg)
 
 It's possible to use system site packages within Python virtual environment,
 but there is no way to install console or gui scripts into such environment.
