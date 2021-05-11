@@ -7,14 +7,6 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-exclude = '''
-(
-  /(
-      \.git
-    | \.tox
-  )/
-)
-'''
 line-length = 88
 
 [tool.setuptools_scm]
