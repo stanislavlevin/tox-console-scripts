@@ -100,7 +100,9 @@ def test_helper_mocked_install(mocker, capsys):
         "tox_console_scripts.helper.console_scripts.open", mocker.mock_open()
     )
     console_scripts.install_console_scripts()
-    mopen.assert_called_once_with(os.path.join("notexistedpath", "mysitepackage"), "w")
+    mopen.assert_called_once_with(
+        os.path.join("notexistedpath", "mysitepackage"), encoding="utf-8", mode="w"
+    )
 
     mopen().write.assert_called_once()
     # check at least shebang
