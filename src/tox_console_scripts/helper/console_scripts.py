@@ -10,7 +10,7 @@ from setuptools.command.easy_install import ScriptWriter
 def write_script(script_name, content, envbindir):
     print(f"Installing {script_name} script to {envbindir}")
     target = os.path.join(envbindir, script_name)
-    with open(target, "w") as dst:
+    with open(target, encoding="utf-8", mode="w") as dst:
         dst.write(content)
         os.fchmod(dst.fileno(), 0o755)
 
