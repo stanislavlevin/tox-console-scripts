@@ -1,13 +1,27 @@
 [MASTER]
 persistent=no
 
+# Return non-zero exit code if any of these messages/categories are detected,
+# even if score is above --fail-under value. Syntax same as enable. Messages
+# specified are enabled, while categories only check already-enabled messages.
+fail-on=useless-suppression,
+
+
 [MESSAGES CONTROL]
 enable=
     all,
     python3,
+    useless-suppression,
 
 disable=
-    I,
+    bad-inline-option,
+    c-extension-no-member,
+    deprecated-pragma,
+    file-ignored,
+    locally-disabled,
+    raw-checker-failed,
+    suppressed-message,
+    use-symbolic-message-instead,
     bad-continuation,
     bad-indentation,
     bad-whitespace,
