@@ -73,6 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: library/alt:sisyphus
+      options: --privileged
     steps:
     - name: Install host dependencies
       run: |
