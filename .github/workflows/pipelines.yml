@@ -62,11 +62,11 @@ jobs:
 
     - uses: actions/checkout@v2
 
-    - name: unit tests
+    - name: unit tests with coverage
       run: |
         python3 --version
         export CONSOLE_SCRIPTS_BASEPYTHON=/usr/bin/python3
-        python3 -m tox -e py -vv
+        python3 -m tox -e py3-coverage -vv
 
   integration_tests:
     name: Run unit and integration tests
@@ -87,8 +87,8 @@ jobs:
             python3-module-tox
     - uses: actions/checkout@v2
 
-    - name: Tests
+    - name: unit and integration tests with coverage
       run: |
         python3 --version
         export CONSOLE_SCRIPTS_BASEPYTHON=/usr/bin/python3
-        python3 -m tox -e py -vv
+        python3 -m tox -e py3-coverage -vv
