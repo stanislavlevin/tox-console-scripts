@@ -16,7 +16,9 @@ write_to = "src/tox_console_scripts/version.py"
 addopts = "-ra --showlocals"
 
 [tool.coverage.run]
-parallel = true
+source = [
+    "tox_console_scripts",
+]
 
 [tool.coverage.report]
 skip_covered = false
