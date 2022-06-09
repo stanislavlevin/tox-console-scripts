@@ -1,4 +1,8 @@
+from pathlib import Path
+import os
 import shutil
+import site
+import sys
 import textwrap
 
 import pytest
@@ -79,3 +83,36 @@ def path_distribution(tmp_dir):
         )
 
     return _make_distribution
+
+
+@pytest.fixture
+def system_distribution():
+    """Generates distribution in system site packages"""
+    if os.geteuid() != 0:
+        pytest.skip("Requires root privileges")
+
+    # one of the paths is enough
+    systemsite_path = Path(sorted(site.getsitepackages([sys.base_prefix]))[0])
+    location = None
+    dist_info = None
+
+    def _make_distribution(name="foo", version="1.0", contents=None):
+        nonlocal location
+        nonlocal dist_info
+
+        distr = PathDistribution(
+            systemsite_path,
+            name=name,
+            version=version,
+            contents=contents,
+        )
+        distr.add_console_scripts(((f"{name}_script", name, "main"),))
+
+        location = distr.location / distr.name
+        dist_info = distr.location / distr.dist_info
+        return distr
+
+    yield _make_distribution
+
+    shutil.rmtree(location, ignore_errors=True)
+    shutil.rmtree(dist_info, ignore_errors=True)

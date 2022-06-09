@@ -1,6 +1,6 @@
+from pathlib import Path
 import os
 import sys
-import subprocess
 
 import pytest
 
@@ -11,101 +11,11 @@ def assert_console_script_installed_once(script_name, path, outlines):
     assert len(matches) == 1, outlines
 
 
-@pytest.fixture
-def systempackage(initproj):
-    """Install custom package into systemsite
+def assert_shebang(script, expected_shebang):
+    with open(script) as f:
+        actual_shebang = f.readline()
 
-    Warning: there is no cleanup! Packages and scripts installed by this
-    fixture are keeped.
-    """
-    if os.geteuid() != 0:
-        pytest.skip("Requires root privileges")
-
-    basepython = os.environ.get("CONSOLE_SCRIPTS_BASEPYTHON")
-    if basepython is None:
-        raise ValueError(
-            "Systemwide Python interpreter path(via CONSOLE_SCRIPTS_BASEPYTHON"
-            " env variable) is required."
-        )
-
-    def systempackage_(name, version, filedefs):
-        initproj((name, version), filedefs=filedefs)
-        args = [
-            basepython,
-            "setup.py",
-            "install",
-            "--root",
-            "/",
-            "--prefix",
-            sys.base_prefix,
-            "--force",
-        ]
-        subprocess.run(args, check=True)
-
-    yield systempackage_
-
-
-@pytest.fixture
-def systemsitepackage(systempackage):
-    """Install typical system site package, which has console_scripts
-
-    Warning: there is no cleanup! Packages and scripts installed by this
-    fixture are keeped.
-    """
-
-    def systemsitepackage_(name, version, install_requires="", console_scripts=True):
-        console_scripts_content = ""
-        if console_scripts:
-            console_scripts_content = f"{name}_script={name}:main"
-
-        systempackage(
-            name,
-            version,
-            filedefs={
-                name: {
-                    "__init__.py": """\
-                        __version__ = {version}
-
-                        def main():
-                            print("Test!")
-                    """.format(
-                        version=version
-                    ),
-                },
-                "setup.cfg": """\
-                    [metadata]
-                    name = {name}
-                    description = {name} project
-                    version = {version}
-                    license = MIT
-                    platforms = unix
-
-                    [options]
-                    packages = find:
-                    install_requires =
-                        {install_requires}
-
-                    [options.packages.find]
-                    where = .
-
-                    [options.entry_points]
-                    console_scripts =
-                        {console_scripts_content}
-                """.format(
-                    name=name,
-                    version=version,
-                    install_requires=install_requires,
-                    console_scripts_content=console_scripts_content,
-                ),
-                "setup.py": """\
-                    from setuptools import setup
-                    if __name__ == "__main__":
-                        setup()
-                """,
-            },
-        )
-
-    yield systemsitepackage_
+    assert actual_shebang == expected_shebang
 
 
 def test_no_plugin_usage(initproj, cmd):
@@ -228,226 +138,181 @@ def test_config_nositepackages(initproj, cmd):
     assert "console_scripts option requires enabled sitepackages" in result.err
 
 
-def test_deps_skipsdist(systemsitepackage, initproj, cmd):
-    sitepkg = "mysitepackage"
-    version = "0.1"
-
-    systemsitepackage(sitepkg, version)
+def test_deps_skipsdist(system_distribution, initproj, cmd):
+    distr = system_distribution()
+    distr.make()
 
     pkg_dir = initproj(
         "pkg123",
         filedefs={
-            "tox.ini": """
+            "tox.ini": """\
                 [tox]
                 skipsdist = True
                 [testenv]
                 deps =
-                    {name}>={version}
-                commands={{envbindir}}/{name}_script
-            """.format(
-                name=sitepkg, version=version
-            ),
+                    foo>=1.0
+                commands={envbindir}/foo_script
+            """
         },
     )
 
-    envbindir = os.path.join(".tox", "python", "bin")
-    sitepkgscript_path = os.path.join(pkg_dir, envbindir, f"{sitepkg}_script")
-
-    envpython_path = os.path.join(pkg_dir, envbindir, "python")
-    expected_shebang = f"#!{envpython_path}\n"
-
     result = cmd("--console-scripts", "--sitepackages", "-vv")
     result.assert_success()
+
+    envbindir = (Path(".tox") / "python" / "bin").resolve()
     assert_console_script_installed_once(
-        f"{sitepkg}_script", path=envbindir, outlines=result.outlines
+        "foo_script", path=envbindir, outlines=result.outlines
     )
+    # result of main function
+    assert "Hello, World!" in result.outlines
 
-    assert os.path.isfile(sitepkgscript_path)
-    with open(sitepkgscript_path) as f:
-        actual_shebang = f.readline()
-
-    assert actual_shebang == expected_shebang
+    expected_shebang = f"#!{envbindir / 'python'}\n"
+    assert_shebang(envbindir / "foo_script", expected_shebang)
 
 
-def test_no_deps_skipsdist(systemsitepackage, initproj, cmd):
-    sitepkg = "mysitepackage"
-    version = "0.1"
-
-    systemsitepackage(sitepkg, version)
+def test_no_deps_skipsdist(system_distribution, initproj, cmd):
+    distr = system_distribution()
+    distr.make()
 
     pkg_dir = initproj(
         "pkg123",
         filedefs={
-            "tox.ini": """
+            "tox.ini": """\
                 [tox]
                 skipsdist = True
                 [testenv]
-                commands={{envbindir}}/{name}_script
-            """.format(
-                name=sitepkg, version=version
-            ),
+                commands={envbindir}/foo_script
+            """
         },
     )
 
-    envbindir = os.path.join(".tox", "python", "bin")
-    sitepkgscript_path = os.path.join(pkg_dir, envbindir, f"{sitepkg}_script")
-
-    envpython_path = os.path.join(pkg_dir, envbindir, "python")
-    expected_shebang = f"#!{envpython_path}\n"
-
     result = cmd("--console-scripts", "--sitepackages", "-vv")
     result.assert_success()
+
+    envbindir = (Path(".tox") / "python" / "bin").resolve()
     assert_console_script_installed_once(
-        f"{sitepkg}_script", path=envbindir, outlines=result.outlines
+        "foo_script", path=envbindir, outlines=result.outlines
     )
+    # result of main function
+    assert "Hello, World!" in result.outlines
 
-    assert os.path.isfile(sitepkgscript_path)
-    with open(sitepkgscript_path) as f:
-        actual_shebang = f.readline()
-
-    assert actual_shebang == expected_shebang
+    expected_shebang = f"#!{envbindir / 'python'}\n"
+    assert_shebang(envbindir / "foo_script", expected_shebang)
 
 
-def test_install_requires(systemsitepackage, initproj, cmd):
-    sitepkg = "mysitepackage"
-    pkg = "my-test-pkg"
-    version = "0.1"
-
-    systemsitepackage(sitepkg, version)
+def test_install_requires(system_distribution, initproj, cmd):
+    distr = system_distribution()
+    distr.make()
 
     pkg_dir = initproj(
-        pkg,
+        "my_test_pkg",
         filedefs={
             "setup.cfg": """\
                 [metadata]
-                name = {name}
-                description = {name} project
-                version = {version}
+                name = my_test_pkg
+                description = my_test_pkg project
+                version = 1.0
                 license = MIT
                 platforms = unix
 
                 [options]
                 packages = find:
                 install_requires =
-                    {sitepkg}
+                    foo
 
                 [options.packages.find]
                 where = .
-            """.format(
-                name=pkg, sitepkg=sitepkg, version=version
-            ),
+            """,
             "setup.py": """\
                 from setuptools import setup
                 if __name__ == "__main__":
                     setup()
             """,
-            "tox.ini": """
+            "tox.ini": """\
                 [tox]
                 [testenv]
-                commands={{envbindir}}/{sitepkg}_script
-            """.format(
-                sitepkg=sitepkg
-            ),
+                commands={envbindir}/foo_script
+            """,
         },
     )
 
-    envbindir = os.path.join(".tox", "python", "bin")
-    sitepkgscript_path = os.path.join(pkg_dir, envbindir, f"{sitepkg}_script")
-
-    envpython_path = os.path.join(pkg_dir, envbindir, "python")
-    expected_shebang = f"#!{envpython_path}\n"
-
     result = cmd("--console-scripts", "--sitepackages", "-vv")
     result.assert_success()
+
+    envbindir = (Path(".tox") / "python" / "bin").resolve()
     assert_console_script_installed_once(
-        f"{sitepkg}_script", path=envbindir, outlines=result.outlines
+        "foo_script", path=envbindir, outlines=result.outlines
     )
+    # result of main function
+    assert "Hello, World!" in result.outlines
 
-    assert os.path.isfile(sitepkgscript_path)
-    with open(sitepkgscript_path) as f:
-        actual_shebang = f.readline()
-
-    assert actual_shebang == expected_shebang
+    expected_shebang = f"#!{envbindir / 'python'}\n"
+    assert_shebang(envbindir / "foo_script", expected_shebang)
 
 
-def test_install_requires_usedevelop(systemsitepackage, initproj, cmd):
-    sitepkg = "mysitepackage"
-    pkg = "my-test-pkg"
-    version = "0.1"
-
-    systemsitepackage(sitepkg, version)
+def test_install_requires_usedevelop(system_distribution, initproj, cmd):
+    distr = system_distribution()
+    distr.make()
 
     pkg_dir = initproj(
-        pkg,
+        "my_test_pkg",
         filedefs={
             "setup.cfg": """\
                 [metadata]
-                name = {name}
-                description = {name} project
-                version = {version}
+                name = my_test_pkg
+                description = my_test_pkg project
+                version = 1.0.0
                 license = MIT
                 platforms = unix
 
                 [options]
                 packages = find:
                 install_requires =
-                    {sitepkg}
+                    foo
 
                 [options.packages.find]
                 where = .
-            """.format(
-                name=pkg, sitepkg=sitepkg, version=version
-            ),
+            """,
             "setup.py": """\
                 from setuptools import setup
                 if __name__ == "__main__":
                     setup()
             """,
-            "tox.ini": """
+            "tox.ini": """\
                 [tox]
                 [testenv]
                 usedevelop=true
-                commands={{envbindir}}/{sitepkg}_script
-            """.format(
-                sitepkg=sitepkg
-            ),
+                commands={envbindir}/foo_script
+            """,
         },
     )
 
-    envbindir = os.path.join(".tox", "python", "bin")
-    sitepkgscript_path = os.path.join(pkg_dir, envbindir, f"{sitepkg}_script")
-
-    envpython_path = os.path.join(pkg_dir, envbindir, "python")
-    expected_shebang = f"#!{envpython_path}\n"
-
     result = cmd("--console-scripts", "--sitepackages", "-vv")
     result.assert_success()
+
+    envbindir = (Path(".tox") / "python" / "bin").resolve()
     assert_console_script_installed_once(
-        f"{sitepkg}_script", path=envbindir, outlines=result.outlines
+        "foo_script", path=envbindir, outlines=result.outlines
     )
+    # result of main function
+    assert "Hello, World!" in result.outlines
 
-    assert os.path.isfile(sitepkgscript_path)
-    with open(sitepkgscript_path) as f:
-        actual_shebang = f.readline()
-
-    assert actual_shebang == expected_shebang
+    expected_shebang = f"#!{envbindir / 'python'}\n"
+    assert_shebang(envbindir / "foo_script", expected_shebang)
 
 
-def test_extra_usedevelop(systemsitepackage, initproj, cmd):
-    sitepkg = "mysitepackage"
-    pkg = "my-test-pkg"
-    version = "0.1"
-
-    systemsitepackage(sitepkg, version)
+def test_extra_usedevelop(system_distribution, initproj, cmd):
+    distr = system_distribution()
+    distr.make()
 
     pkg_dir = initproj(
-        pkg,
+        "my_test_pkg",
         filedefs={
             "setup.cfg": """\
                 [metadata]
-                name = {name}
-                description = {name} project
-                version = {version}
+                name = my_test_pkg
+                description = my_test_pkg project
+                version = 1.0
                 license = MIT
                 platforms = unix
 
@@ -459,42 +324,33 @@ def test_extra_usedevelop(systemsitepackage, initproj, cmd):
 
                 [options.extras_require]
                 tests =
-                    {sitepkg}
-            """.format(
-                name=pkg, sitepkg=sitepkg, version=version
-            ),
+                    foo
+            """,
             "setup.py": """\
                 from setuptools import setup
                 if __name__ == "__main__":
                     setup()
             """,
-            "tox.ini": """
+            "tox.ini": """\
                 [tox]
                 [testenv]
                 extras =
                     tests
                 usedevelop=true
-                commands={{envbindir}}/{sitepkg}_script
-            """.format(
-                sitepkg=sitepkg
-            ),
+                commands={envbindir}/foo_script
+            """,
         },
     )
 
-    envbindir = os.path.join(".tox", "python", "bin")
-    sitepkgscript_path = os.path.join(pkg_dir, envbindir, f"{sitepkg}_script")
-
-    envpython_path = os.path.join(pkg_dir, envbindir, "python")
-    expected_shebang = f"#!{envpython_path}\n"
-
     result = cmd("--console-scripts", "--sitepackages", "-vv")
     result.assert_success()
+
+    envbindir = (Path(".tox") / "python" / "bin").resolve()
     assert_console_script_installed_once(
-        f"{sitepkg}_script", path=envbindir, outlines=result.outlines
+        "foo_script", path=envbindir, outlines=result.outlines
     )
+    # result of main function
+    assert "Hello, World!" in result.outlines
 
-    assert os.path.isfile(sitepkgscript_path)
-    with open(sitepkgscript_path) as f:
-        actual_shebang = f.readline()
-
-    assert actual_shebang == expected_shebang
+    expected_shebang = f"#!{envbindir / 'python'}\n"
+    assert_shebang(envbindir / "foo_script", expected_shebang)
