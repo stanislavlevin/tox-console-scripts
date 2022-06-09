@@ -18,6 +18,17 @@ def assert_shebang(script, expected_shebang):
     assert actual_shebang == expected_shebang
 
 
+@pytest.fixture(autouse=True)
+def isolated_env(monkeypatch):
+    monkeypatch.setenv("PIP_NO_BUILD_ISOLATION", "NO")
+    monkeypatch.setenv("PIP_NO_INDEX", "YES")
+    monkeypatch.setenv("PIP_DISABLE_PIP_VERSION_CHECK", "1")
+    monkeypatch.setenv(
+        "TOX_TESTENV_PASSENV",
+        "PIP_NO_BUILD_ISOLATION PIP_NO_INDEX PIP_DISABLE_PIP_VERSION_CHECK",
+    )
+
+
 def test_no_plugin_usage(initproj, cmd):
     """Plugin doesn't break regular tox"""
     initproj(
