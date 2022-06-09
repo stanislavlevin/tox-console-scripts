@@ -64,7 +64,6 @@ jobs:
     - name: unit tests with coverage
       run: |
         python3 --version
-        export CONSOLE_SCRIPTS_BASEPYTHON=/usr/bin/python3
         python3 -m tox -e py3-coverage -vv
 
   integration_tests:
@@ -89,5 +88,4 @@ jobs:
     - name: unit and integration tests with coverage
       run: |
         python3 --version
-        export CONSOLE_SCRIPTS_BASEPYTHON=/usr/bin/python3
         python3 -m tox -e py3-coverage -vv
