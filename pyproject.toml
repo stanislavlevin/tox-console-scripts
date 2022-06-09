@@ -1,16 +1,12 @@
 [build-system]
 requires = [
     "setuptools >= 42.0",
-    "setuptools-scm[toml] >= 3.4",
     "wheel",
 ]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 88
-
-[tool.setuptools_scm]
-write_to = "src/tox_console_scripts/version.py"
 
 [tool.pytest.ini_options]
 addopts = "-ra --showlocals"

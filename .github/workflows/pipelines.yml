@@ -28,7 +28,6 @@ jobs:
         python --version
         python -m pip install --upgrade pip
         python -m pip install --user --force \
-            setuptools_scm \
             tox
 
     - uses: actions/checkout@v2
@@ -58,7 +57,6 @@ jobs:
         python --version
         python -m pip install --upgrade pip
         python -m pip install --user --force \
-            setuptools_scm \
             tox
 
     - uses: actions/checkout@v2
@@ -85,7 +83,6 @@ jobs:
             git \
             python3-modules-sqlite3 \
             python3-module-setuptools \
-            python3-module-setuptools_scm \
             python3-module-tox
     - uses: actions/checkout@v2
 
