@@ -14,6 +14,9 @@ write_to = "src/tox_console_scripts/version.py"
 
 [tool.pytest.ini_options]
 addopts = "-ra --showlocals"
+filterwarnings = [
+    "error",
+]
 
 [tool.coverage.run]
 source = [
