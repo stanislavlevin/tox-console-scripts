@@ -6,7 +6,7 @@ import pytest
 
 
 def assert_console_script_installed_once(script_name, path, outlines):
-    expected = f"Installing {script_name} script to {path}"
+    expected = f"Generating script {script_name} into {path}"
     matches = [l for l in outlines if l == expected]
     assert len(matches) == 1, outlines
 
