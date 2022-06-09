@@ -42,6 +42,7 @@ jobs:
 
   unit_tests:
     name: Run unit tests
+    needs: [lint]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -70,6 +71,7 @@ jobs:
 
   integration_tests:
     name: Run unit and integration tests
+    needs: [lint]
     runs-on: ubuntu-latest
     container:
       image: library/alt:sisyphus
