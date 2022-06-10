@@ -31,8 +31,13 @@ source = [
 ]
 
 [tool.pylint."master"]
+recursive = true
 suggestion-mode = "yes"
 persistent="no"
+ignore-paths = [
+    '.*/\.git/.*',
+    '.*/\.tox/.*',
+]
 
 [tool.pylint."messages control"]
 enable = [

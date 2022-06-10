@@ -1,14 +1,11 @@
 from importlib.metadata import distributions
 import os
-import re
-import site
 import subprocess
 import sys
-import textwrap
 
 import pytest
 
-import tox_console_scripts.helper.console_scripts as console_scripts
+from tox_console_scripts.helper import console_scripts
 
 
 @pytest.fixture
