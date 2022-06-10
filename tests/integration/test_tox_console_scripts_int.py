@@ -1,6 +1,4 @@
 from pathlib import Path
-import os
-import sys
 
 import pytest
 
@@ -12,7 +10,7 @@ def assert_console_script_installed_once(script_name, path, outlines):
 
 
 def assert_shebang(script, expected_shebang):
-    with open(script) as f:
+    with open(script, encoding="utf-8") as f:
         actual_shebang = f.readline()
 
     assert actual_shebang == expected_shebang
