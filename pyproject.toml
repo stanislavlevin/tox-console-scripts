@@ -36,7 +36,9 @@ suggestion-mode = "yes"
 persistent="no"
 ignore-paths = [
     '.*/\.git/.*',
+    '^.git/.*',  # dot escaping doesn't work, see pylint#5398
     '.*/\.tox/.*',
+    '^.tox/.*',  # dot escaping doesn't work, see pylint#5398
 ]
 
 [tool.pylint."messages control"]
