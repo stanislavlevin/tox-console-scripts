@@ -8,6 +8,7 @@ description = "Create console scripts of system site packages within tox env"
 requires-python = ">= 3.9"
 dependencies = [
   "tox > 4",
+  "pyproject-installer >= 0.4.0",
 ]
 dynamic = ["version"]
 readme = "README.md"

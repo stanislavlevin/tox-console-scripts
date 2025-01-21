@@ -32,7 +32,9 @@ jobs:
           pylint \
           black \
           pytest \
-          tox \
+
+        # to pull runtime dependencies
+        python -m pip install .
 
     - name: Pylint
       run: |
