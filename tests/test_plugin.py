@@ -61,7 +61,7 @@ def test_plugin_usage(tox_project):
     - run tox with --console-scripts
     - check if console script works
     - check if output contains the only related record
-    - check the generated script for the marker
+    - check the generated script
     """
     project = tox_project()
     expected_console_script = "pytest"
