@@ -80,7 +80,6 @@ source = [
 
 [tool.pylint."master"]
 recursive = true
-suggestion-mode = "yes"
 persistent="no"
 ignore-paths = [
     '.*/\.git/.*',
