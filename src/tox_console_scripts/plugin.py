@@ -8,7 +8,6 @@ from pyproject_installer.lib.scripts import generate_entrypoints_scripts
 
 from tox.plugin import impl
 
-
 logger = logging.getLogger(__name__)
 
 
