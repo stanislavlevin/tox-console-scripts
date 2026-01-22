@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tox-console-scripts"
 description = "Create console scripts of system site packages within tox env"
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 dependencies = [
   "tox > 4",
   "pyproject-installer >= 0.4.0",
@@ -31,7 +31,6 @@ classifiers = [
   "Topic :: Utilities",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
