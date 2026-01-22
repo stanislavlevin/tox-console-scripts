@@ -66,9 +66,7 @@ def test_plugin_usage(tox_project):
     project = tox_project()
     expected_console_script = "pytest"
     env_name = "py"
-    project.contents[
-        "tox.ini"
-    ] = f"""\
+    project.contents["tox.ini"] = f"""\
         [tox]
         env_list = {env_name}
         [testenv]
@@ -107,9 +105,7 @@ def test_no_plugin_usage(tox_project):
     project = tox_project()
     expected_console_script = "pytest"
     env_name = "py"
-    project.contents[
-        "tox.ini"
-    ] = f"""\
+    project.contents["tox.ini"] = f"""\
         [tox]
         env_list = {env_name}
         [testenv]
@@ -142,9 +138,7 @@ def test_plugin_usage_no_systemsite(tox_project):
     project = tox_project()
     expected_console_script = "pytest"
     env_name = "py"
-    project.contents[
-        "tox.ini"
-    ] = f"""\
+    project.contents["tox.ini"] = f"""\
         [tox]
         env_list = {env_name}
         [testenv]
