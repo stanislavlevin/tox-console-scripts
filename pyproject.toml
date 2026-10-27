@@ -62,6 +62,7 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
+patch = ["subprocess"]
 source = [
     "tox_console_scripts",
 ]
