@@ -11,14 +11,6 @@ from tox.plugin import impl
 logger = logging.getLogger(__name__)
 
 
-def distr_name(distr):
-    """`name` added in importlib.metadata 3.3.0 and Python 3.10"""
-    try:
-        return distr.name
-    except AttributeError:
-        return distr.metadata["Name"]
-
-
 @impl
 def tox_add_option(parser):
     parser.add_argument(
@@ -70,16 +62,14 @@ def install_console_scripts(env_python, env_bin_dir):
     """
     ssp_paths = site.getsitepackages([sys.base_prefix])
     ssds = {
-        pep503_normalized_name(distr_name(x)): x
-        for x in distributions(path=ssp_paths)
+        pep503_normalized_name(x.name): x for x in distributions(path=ssp_paths)
     }
 
     # user site packages can be either a string or None
     usp_path = site.getusersitepackages()
     usp_paths = [] if usp_path is None else [usp_path]
     usds = {
-        pep503_normalized_name(distr_name(x)): x
-        for x in distributions(path=usp_paths)
+        pep503_normalized_name(x.name): x for x in distributions(path=usp_paths)
     }
 
     logger.info("generating console scripts of system packages")

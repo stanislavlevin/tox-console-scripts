@@ -5,7 +5,6 @@ import sys
 import pytest
 
 from tox_console_scripts import __version__
-from tox_console_scripts.plugin import distr_name
 
 
 def globally_installed(name):
@@ -17,7 +16,7 @@ def globally_installed(name):
     return any(
         True
         for d in distributions(path=paths)
-        if distr_name(d) and distr_name(d).lower() == name
+        if d.name and d.name.lower() == name
     )
 
 
